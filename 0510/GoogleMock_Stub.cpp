@@ -15,6 +15,8 @@ struct IConnection {
 	virtual ~IConnection() {}
 };
 
+// TCPConnection, BluetoothConnection ...
+
 class User {
 	IConnection *connection;
 public:
@@ -29,21 +31,36 @@ public:
 	}
 };
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
+// Test Stub
+//  : 특수한 상황을 시뮬레이션 할 수 있다.
+//   => 제어할 수 없는 외부 의존물을 통제하는 목적.
+//   => 하나의 결과를 처리한다. 
+
+// 네트워크 연결이 끊겼을 때, IOException 예외가 발생하는지 여부를 검증하고 싶다.
 class StubConnection : public IConnection {
 public:
-	MOCK_METHOD2(Move, void(int, int));
-	MOCK_METHOD1(Attack, void(User*));
-}
+	virtual void Move(int x, int y) {
+		throw IOException();
+	}
 
-using ::testing::Throw;
+	virtual void Attack(User* p) {
+		throw IOException();
+	}
+};
+
 TEST(UserTest, moveTest) {
 	StubConnection stub;
-	ON_CALL(stub, Move(10, 20)).WillRepeatedly(Throw(IOException()));
 	User user(&stub);
 
 	EXPECT_THROW(user.Move(10, 20), IOException);
+}
+
+TEST(UserTest, attackTest) {
+	StubConnection stub;
+	User user(&stub);
+
+	EXPECT_THROW(user.Attack(nullptr), IOException);
 }
 
 
